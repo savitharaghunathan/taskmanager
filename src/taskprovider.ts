@@ -81,16 +81,15 @@ class ProcessController {
             vscode.TaskScope.Workspace,
             request.name,
             'myTaskProvider',
-            new vscode.ShellExecution(`echo "Executing task ${request.name} with counter ${request.counter}"`)
+            new vscode.CustomExecution(async (): Promise<vscode.Pseudoterminal> => {
+                return new SimplePseudoterminal(request, this.outputChannel, this);
+            })
         );
-
-        task.execution = new vscode.CustomExecution(async (): Promise<vscode.Pseudoterminal> => {
-            return new SimplePseudoterminal(request, this.outputChannel, this);
-        });
-
+    
         const execution = await vscode.tasks.executeTask(task);
         runningTasks.set(request.id, { taskExecution: execution, workerType: request.type });
     }
+    
 
     async completeTask(request: Requests) {
         if (request.type === "kai") {
