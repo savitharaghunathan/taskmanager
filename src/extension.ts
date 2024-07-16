@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MyTaskProvider, Requests, getTaskCounter, incrementTaskCounter, addRequest, runningTasks } from './taskprovider';
+import { MyTaskProvider, Requests, getTaskCounter, incrementTaskCounter, addRequest, runningTasks, removeRequestById, getRequests } from './taskprovider';
 
 let outputChannel: vscode.OutputChannel;
 
@@ -25,12 +25,16 @@ export function activate(context: vscode.ExtensionContext) {
         outputChannel.appendLine(`Task ${JSON.stringify(taskRequest)} created and added to queue.`);
     }));
 
-    context.subscriptions.push(vscode.commands.registerCommand('extension.cancelTask', async () => {
-        const taskIds = Array.from(runningTasks.keys()).map(id => id.toString());
+	context.subscriptions.push(vscode.commands.registerCommand('extension.cancelTask', async () => {
+        const runningTaskIds = Array.from(runningTasks.keys()).map(id => id.toString());
+        const waitingTaskIds = getRequests().map(request => request.id.toString());
+        const taskIds = runningTaskIds.concat(waitingTaskIds);
+
         const taskIdStr = await vscode.window.showQuickPick(taskIds, { placeHolder: 'Select Task ID to cancel' });
         if (taskIdStr) {
             const taskId = parseInt(taskIdStr);
             taskProvider.cancelTask(taskId);
+            removeRequestById(taskId); // Remove from the request queue if it is waiting
         }
     }));
 

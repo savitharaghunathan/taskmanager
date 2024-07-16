@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as child_process from 'child_process';
 
 export interface Requests {
     id: number;
@@ -11,7 +10,7 @@ export interface Requests {
 let taskcounter = 0;
 let requests: Requests[] = [];
 
-export const runningTasks = new Map<number, { taskExecution: vscode.TaskExecution, process: child_process.ChildProcess | NodeJS.Timeout | null, workerType: 'kai' | 'kantra' }>();
+export const runningTasks = new Map<number, { taskExecution: vscode.TaskExecution, workerType: 'kai' | 'kantra' }>();
 
 export function getTaskCounter() {
     return taskcounter;
@@ -86,7 +85,7 @@ class ProcessController {
         });
 
         const execution = await vscode.tasks.executeTask(task);
-        runningTasks.set(request.id, { taskExecution: execution, process: null, workerType: request.type });
+        runningTasks.set(request.id, { taskExecution: execution, workerType: request.type });
     }
 
     async completeTask(request: Requests) {
@@ -104,11 +103,6 @@ class ProcessController {
         this.outputChannel.appendLine(`Cancelling task with id - ${id}`);
         const exeProcess = runningTasks.get(id);
         if (exeProcess) {
-            if (exeProcess.process instanceof child_process.ChildProcess) {
-                exeProcess.process.kill();
-            } else if (typeof exeProcess.process === 'number') {
-                clearTimeout(exeProcess.process);
-            }
             exeProcess.taskExecution.terminate();
             runningTasks.delete(id);
             this.outputChannel.appendLine(`Task ${id} cancelled.`);
@@ -178,25 +172,24 @@ class SimplePseudoterminal implements vscode.Pseudoterminal {
             }, 120000); // Simulate task duration of 2 minutes
 
             const taskExecution = runningTasks.get(this.request.id)?.taskExecution!;
-            runningTasks.set(this.request.id, { taskExecution, process: timeoutId, workerType: 'kai' });
+            runningTasks.set(this.request.id, { taskExecution, workerType: 'kai' });
         });
     }
 
     private async runKantraBinary(): Promise<void> {
-        this.outputChannel.appendLine(`Running Kantra binary for task ${this.request.name} with counter ${this.request.counter}`);
+        this.outputChannel.appendLine(`Running Kantra task for task ${this.request.name} with counter ${this.request.counter}`);
         return new Promise<void>((resolve) => {
-            const process = setTimeout(() => {
+            setTimeout(() => {
                 if (!runningTasks.has(this.request.id)) {
                     resolve();
                     return;
                 }
-                const timestamp = new Date().toISOString();
-                this.outputChannel.appendLine(`Kantra processed for task ${this.request.name} with counter ${this.request.counter}: ${timestamp}`);
+                this.outputChannel.appendLine(`hi from kantra`);
                 resolve();
             }, 120000); // Simulate task duration of 2 minutes
 
             const taskExecution = runningTasks.get(this.request.id)?.taskExecution!;
-            runningTasks.set(this.request.id, { taskExecution, process, workerType: 'kantra' });
+            runningTasks.set(this.request.id, { taskExecution, workerType: 'kantra' });
         });
     }
 }
