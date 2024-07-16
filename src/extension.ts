@@ -3,11 +3,9 @@ import { MyTaskProvider, Requests, getTaskCounter, incrementTaskCounter, addRequ
 
 let outputChannel: vscode.OutputChannel;
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('Task Log');
-    outputChannel.show(true); // Show the OutputChannel when the extension is activated
+    outputChannel.show(true); 
 
     const taskProvider = new MyTaskProvider(outputChannel);
     context.subscriptions.push(vscode.tasks.registerTaskProvider('mytasks', taskProvider));
@@ -34,12 +32,11 @@ export function activate(context: vscode.ExtensionContext) {
         if (taskIdStr) {
             const taskId = parseInt(taskIdStr);
             taskProvider.cancelTask(taskId);
-            removeRequestById(taskId); // Remove from the request queue if it is waiting
+            removeRequestById(taskId); 
         }
     }));
 
     context.subscriptions.push(outputChannel);
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() {}

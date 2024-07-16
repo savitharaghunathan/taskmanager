@@ -29,6 +29,10 @@ export function addRequest(request: Requests) {
     console.log(`Task added to queue: ${JSON.stringify(request)}`);
 }
 
+export function removeRequestById(id: number) {
+    requests = requests.filter(request => request.id !== id);
+}
+
 class ProcessController {
     private maxKaiWorkers: number;
     private maxKantraWorkers: number;
@@ -155,8 +159,13 @@ class SimplePseudoterminal implements vscode.Pseudoterminal {
         } else if (this.request.type === 'kantra') {
             await this.runKantraBinary();
         }
-        this.closeEmitter.fire();
-        this.controller.completeTask(this.request);
+
+        if (runningTasks.has(this.request.id)) {
+
+            this.closeEmitter.fire();
+            this.controller.completeTask(this.request);
+        
+        }
     }
 
     private async callKaiBackend(): Promise<void> {
